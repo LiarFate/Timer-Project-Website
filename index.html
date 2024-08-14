@@ -4,18 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Timer Website</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-    }
-    #timer {
-      font-size: 48px;
-      font-weight: bold;
-    }
-  </style>
+  <link rel="stylesheet" type="text/css" href="styles.css">
 </head>
 <body>
-  <h1 id="timer">00:00</h1>
+  <time id="timer" class="timer-display" aria-live="polite">00:00</time>
   <script src="script.js"></script>
 </body>
 </html>
