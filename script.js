@@ -1,4 +1,5 @@
 // Get the timer element
+const mongoose = require('mongoose');
 const timerElement = document.getElementById('timer');
 
 // Set the initial timer state
@@ -26,9 +27,7 @@ function formatTime(time) {
 // Initialize the timer
 updateTimer();
 
-const mongoose = require('mongoose');
-
-mongoose.connect('mongodb+srv://<I Wanna Be Doggy>:<VYMr-5N-a5A!Ac9>@<IWannaBeDoggy>.mongodb.net/<database-name>?retryWrites=true&w=majority', {
+mongoose.connect('mongodb+srv://IWannaBeDoggy:VYMr-5N-a5A!Ac9@IWannaBeDoggy.mongodb.net/time-db?retryWrites=true&w=majority', {
   useNewUrlParser: true,
   useUnifiedTopology: true
 });
