@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+// timer.model.ts
 interface Timer {
   startCountdown(): void;
   formatTime(seconds: number): string;
@@ -39,6 +39,7 @@ class TimerModel implements Timer {
   }
 }
 
+// timer.presenter.ts
 class TimerPresenter {
   private timerModel: TimerModel;
   private timerRenderer: TimerRenderer;
@@ -59,6 +60,7 @@ class TimerPresenter {
   }
 }
 
+// timer.renderer.ts
 class TimerRenderer {
   private timerElement: HTMLElement;
   private intervalId: number;
@@ -70,7 +72,7 @@ class TimerRenderer {
 
   startRendering(): void {
     this.intervalId = setInterval(() => {
-      this.timerElement.innerHTML = this.formatTime();
+      this.timerElement.innerHTML = this.formatTime(this.timerModel.getSecondsElapsed());
     }, 1000);
   }
 
@@ -78,18 +80,19 @@ class TimerRenderer {
     clearInterval(this.intervalId);
   }
 
-  private formatTime(): string {
-    // implement formatting logic here
+  private formatTime(seconds: number): string {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes.toString().padStart(2, "0")}:${remainingSeconds.toString().padStart(2, "0")}`;
   }
 }
 
+// timer.controller.ts
 class TimerController {
   private timerPresenter: TimerPresenter;
 
-  constructor(timerElement: HTMLElement) {
-    const timerModel = new TimerModel();
-    const timerRenderer = new TimerRenderer(timerElement);
-    this.timerPresenter = new TimerPresenter(timerModel, timerRenderer);
+  constructor(timerPresenter: TimerPresenter) {
+    this.timerPresenter = timerPresenter;
   }
 
   startCountdown(): void {
@@ -101,22 +104,54 @@ class TimerController {
   }
 }
 
+// timer.factory.ts
+class TimerFactory {
+  createTimerController(timerElement: HTMLElement): TimerController {
+    const timerModel = new TimerModel();
+    const timerRenderer = new TimerRenderer(timerElement);
+    const timerPresenter = new TimerPresenter(timerModel, timerRenderer);
+    return new TimerController(timerPresenter);
+  }
+}
+
+// main.ts
+import { TimerFactory } from './timer.factory';
+import { MongoClient } from 'mongodb';
+
 const timerElement: HTMLElement | null = document.getElementById("timer");
 
 if (!timerElement) {
   console.error("Timer element not found");
 } else {
-  const timerController: TimerController = new TimerController(timerElement);
-  timerController.startCountdown();
+  const timerFactory = new TimerFactory();
+  const timerController = timerFactory.createTimerController(timerElement);
+
+  // Connect to MongoDB
+  const client = new MongoClient('mongodb+srv://IWannaBeDoggy:VYMr-5N-a5A!Ac9@IWannaBeDoggy.mongodb.net/time-db?retryWrites=true&w=majority', {
+    useNewUrlParser: true,
+    useUnifiedTopology: true
+  });
+
+  client.connect((err, client) => {
+    if (err) {
+      console.error(err);
+    } else {
+      console.log('Connected to MongoDB');
+
+      // Create a collection
+      const collection = client.collection('timers');
+
+      // Insert a document
+      collection.insertOne({ startTime: new Date(), interval: 1000, currentTime: 0 }, (err, result) => {
+        if (err) {
+          console.error(err);
+        } else {
+          console.log('Document inserted');
+
+          // Start the timer
+          timerController.startCountdown();
+        }
+      });
+    }
+  });
 }
-
-mongoose.connect('mongodb+srv://IWannaBeDoggy:VYMr-5N-a5A!Ac9@IWannaBeDoggy.mongodb.net/time-db?retryWrites=true&w=majority', {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
-});
-
-const Timer = mongoose.model('Timer', {
-  startTime: Date,
-  interval: Number,
-  currentTime: Number
-});
