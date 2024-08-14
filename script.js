@@ -1,31 +1,114 @@
-// Get the timer element
 const mongoose = require('mongoose');
-const timerElement = document.getElementById('timer');
-
-// Set the initial timer state
-let timerState = {
-  startTime: new Date().getTime(),
-  interval: 1000, // 1 second
-  currentTime: 0
-};
-
-// Update the timer display
-function updateTimer() {
-  const currentTime = new Date().getTime();
-  timerState.currentTime = currentTime - timerState.startTime;
-  timerElement.textContent = formatTime(timerState.currentTime);
-  setTimeout(updateTimer, timerState.interval);
+interface Timer {
+  startCountdown(): void;
+  formatTime(seconds: number): string;
+  destroy(): void;
 }
 
-// Format the time for display
-function formatTime(time) {
-  const minutes = Math.floor(time / 60000);
-  const seconds = Math.floor((time % 60000) / 1000);
-  return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+class TimerModel implements Timer {
+  private secondsElapsed: number;
+  private intervalId: number;
+
+  constructor() {
+    this.secondsElapsed = 0;
+    this.intervalId = 0;
+  }
+
+  startCountdown(): void {
+    this.intervalId = this.startInterval(() => {
+      this.secondsElapsed++;
+    }, 1000);
+  }
+
+  formatTime(seconds: number): string {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes.toString().padStart(2, "0")}:${remainingSeconds.toString().padStart(2, "0")}`;
+  }
+
+  destroy(): void {
+    clearInterval(this.intervalId);
+  }
+
+  getSecondsElapsed(): number {
+    return this.secondsElapsed;
+  }
+
+  private startInterval(callback: () => void, interval: number): number {
+    return setInterval(callback, interval);
+  }
 }
 
-// Initialize the timer
-updateTimer();
+class TimerPresenter {
+  private timerModel: TimerModel;
+  private timerRenderer: TimerRenderer;
+
+  constructor(timerModel: TimerModel, timerRenderer: TimerRenderer) {
+    this.timerModel = timerModel;
+    this.timerRenderer = timerRenderer;
+  }
+
+  startCountdown(): void {
+    this.timerModel.startCountdown();
+    this.timerRenderer.startRendering();
+  }
+
+  destroy(): void {
+    this.timerModel.destroy();
+    this.timerRenderer.stopRendering();
+  }
+}
+
+class TimerRenderer {
+  private timerElement: HTMLElement;
+  private intervalId: number;
+
+  constructor(timerElement: HTMLElement) {
+    this.timerElement = timerElement;
+    this.intervalId = 0;
+  }
+
+  startRendering(): void {
+    this.intervalId = setInterval(() => {
+      this.timerElement.innerHTML = this.formatTime();
+    }, 1000);
+  }
+
+  stopRendering(): void {
+    clearInterval(this.intervalId);
+  }
+
+  private formatTime(): string {
+    // implement formatting logic here
+  }
+}
+
+class TimerController {
+  private timerPresenter: TimerPresenter;
+
+  constructor(timerElement: HTMLElement) {
+    const timerModel = new TimerModel();
+    const timerRenderer = new TimerRenderer(timerElement);
+    this.timerPresenter = new TimerPresenter(timerModel, timerRenderer);
+  }
+
+  startCountdown(): void {
+    this.timerPresenter.startCountdown();
+  }
+
+  destroy(): void {
+    this.timerPresenter.destroy();
+  }
+}
+
+const timerElement: HTMLElement | null = document.getElementById("timer");
+
+if (!timerElement) {
+  console.error("Timer element not found");
+} else {
+  const timerController: TimerController = new TimerController(timerElement);
+  timerController.startCountdown();
+}
 
 mongoose.connect('mongodb+srv://IWannaBeDoggy:VYMr-5N-a5A!Ac9@IWannaBeDoggy.mongodb.net/time-db?retryWrites=true&w=majority', {
   useNewUrlParser: true,
