@@ -25,3 +25,16 @@ function formatTime(time) {
 
 // Initialize the timer
 updateTimer();
+
+const mongoose = require('mongoose');
+
+mongoose.connect('mongodb+srv://<I Wanna Be Doggy>:<VYMr-5N-a5A!Ac9>@<IWannaBeDoggy>.mongodb.net/<database-name>?retryWrites=true&w=majority', {
+  useNewUrlParser: true,
+  useUnifiedTopology: true
+});
+
+const Timer = mongoose.model('Timer', {
+  startTime: Date,
+  interval: Number,
+  currentTime: Number
+});
